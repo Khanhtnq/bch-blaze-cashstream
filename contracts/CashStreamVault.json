@@ -1,0 +1,73 @@
+{
+  "contractName": "CashStreamVault",
+  "constructorInputs": [
+    { "name": "senderPk", "type": "pubkey" },
+    { "name": "recipientPk", "type": "pubkey" },
+    { "name": "streamCategoryId", "type": "bytes32" },
+    { "name": "startTime", "type": "int" },
+    { "name": "stopTime", "type": "int" },
+    { "name": "totalStreamAmount", "type": "int" }
+  ],
+  "abi": [
+    {
+      "name": "claim",
+      "inputs": [
+        { "name": "recipientSig", "type": "sig" },
+        { "name": "claimTime", "type": "int" },
+        { "name": "claimAmount", "type": "int" }
+      ]
+    },
+    {
+      "name": "clawback",
+      "inputs": [
+        { "name": "senderSig", "type": "sig" },
+        { "name": "cancelTime", "type": "int" }
+      ]
+    }
+  ],
+  "bytecode": "OP_6 OP_PICK OP_0 OP_NUMEQUAL OP_IF OP_7 OP_ROLL OP_2 OP_PICK OP_CHECKSIGVERIFY OP_7 OP_PICK OP_CHECKLOCKTIMEVERIFY OP_DROP OP_7 OP_PICK OP_4 OP_PICK OP_GREATERTHANOREQUAL OP_VERIFY OP_INPUTINDEX OP_UTXOTOKENCATEGORY OP_3 OP_PICK OP_EQUALVERIFY OP_4 OP_PICK OP_4 OP_PICK OP_SUB OP_DUP OP_0 OP_GREATERTHAN OP_VERIFY OP_8 OP_ROLL OP_DUP OP_7 OP_PICK OP_GREATERTHAN OP_IF OP_6 OP_PICK OP_NIP OP_ENDIF OP_7 OP_PICK OP_SWAP OP_6 OP_ROLL OP_SUB OP_MUL OP_SWAP OP_DIV OP_INPUTINDEX OP_UTXOVALUE OP_6 OP_ROLL OP_OVER OP_SUB OP_8 OP_PICK OP_ADD OP_ROT OP_LESSTHANOREQUAL OP_VERIFY OP_6 OP_PICK OP_0 OP_GREATERTHAN OP_VERIFY OP_6 OP_PICK OP_SUB OP_DUP e803 OP_GREATERTHAN OP_IF OP_0 OP_OUTPUTBYTECODE OP_INPUTINDEX OP_UTXOBYTECODE OP_EQUALVERIFY OP_0 OP_OUTPUTTOKENCATEGORY OP_4 OP_PICK OP_EQUALVERIFY OP_0 OP_OUTPUTVALUE OP_OVER OP_GREATERTHANOREQUAL OP_VERIFY 76a914 OP_3 OP_PICK OP_HASH160 OP_CAT 88ac OP_CAT OP_1 OP_OUTPUTBYTECODE OP_OVER OP_EQUALVERIFY OP_1 OP_OUTPUTVALUE OP_8 OP_PICK OP_GREATERTHANOREQUAL OP_VERIFY OP_DROP OP_ELSE 76a914 OP_3 OP_PICK OP_HASH160 OP_CAT 88ac OP_CAT OP_0 OP_OUTPUTBYTECODE OP_OVER OP_EQUALVERIFY OP_0 OP_OUTPUTVALUE OP_8 OP_PICK OP_GREATERTHANOREQUAL OP_VERIFY OP_DROP OP_ENDIF OP_2DROP OP_2DROP OP_2DROP OP_DROP OP_1 OP_ELSE OP_6 OP_ROLL OP_1 OP_NUMEQUALVERIFY OP_6 OP_ROLL OP_OVER OP_CHECKSIGVERIFY OP_6 OP_PICK OP_CHECKLOCKTIMEVERIFY OP_DROP OP_INPUTINDEX OP_UTXOTOKENCATEGORY OP_3 OP_ROLL OP_EQUALVERIFY OP_INPUTINDEX OP_UTXOVALUE OP_6 OP_PICK OP_5 OP_PICK OP_LESSTHAN OP_IF OP_4 OP_PICK OP_4 OP_PICK OP_SUB OP_7 OP_PICK OP_DUP OP_6 OP_PICK OP_LESSTHAN OP_IF OP_5 OP_PICK OP_NIP OP_ENDIF OP_7 OP_PICK OP_OVER OP_7 OP_PICK OP_SUB OP_MUL OP_2 OP_PICK OP_DIV OP_8 OP_PICK OP_OVER OP_SUB OP_DUP OP_0 OP_GREATERTHAN OP_5 OP_PICK OP_2 OP_PICK OP_GREATERTHAN OP_BOOLAND OP_IF 76a914 OP_6 OP_PICK OP_HASH160 OP_CAT 88ac OP_CAT OP_0 OP_OUTPUTBYTECODE OP_OVER OP_EQUALVERIFY OP_0 OP_OUTPUTVALUE OP_2 OP_PICK OP_GREATERTHANOREQUAL OP_VERIFY OP_5 OP_PICK OP_2 OP_PICK OP_SUB OP_DUP e803 OP_GREATERTHAN OP_IF 76a914 OP_9 OP_PICK OP_HASH160 OP_CAT 88ac OP_CAT OP_1 OP_OUTPUTBYTECODE OP_OVER OP_EQUALVERIFY OP_1 OP_OUTPUTVALUE OP_2 OP_PICK OP_GREATERTHANOREQUAL OP_VERIFY OP_DROP OP_ENDIF OP_2DROP OP_ELSE 76a914 OP_6 OP_PICK OP_HASH160 OP_CAT 88ac OP_CAT OP_0 OP_OUTPUTBYTECODE OP_OVER OP_EQUALVERIFY OP_0 OP_OUTPUTVALUE OP_6 OP_PICK e803 OP_SUB OP_GREATERTHANOREQUAL OP_VERIFY OP_DROP OP_ENDIF OP_2DROP OP_2DROP OP_ELSE 76a914 OP_2 OP_PICK OP_HASH160 OP_CAT 88ac OP_CAT OP_0 OP_OUTPUTBYTECODE OP_OVER OP_EQUALVERIFY OP_0 OP_OUTPUTVALUE OP_2 OP_PICK e803 OP_SUB OP_GREATERTHANOREQUAL OP_VERIFY OP_DROP OP_ENDIF OP_2DROP OP_2DROP OP_2DROP OP_DROP OP_1 OP_ENDIF",
+  "source": "pragma cashscript ^0.14.0;\n\n// CashStreamVault: Linear per-block token/BCH streaming covenant with mutable state NFT\n// Enforces continuous vesting, recipient claims, self-reproducing covenant output, and sender clawback guard.\ncontract CashStreamVault(\n    pubkey senderPk,\n    pubkey recipientPk,\n    bytes32 streamCategoryId,  // NFT category locking this stream session\n    int startTime,            // Stream start block / timestamp\n    int stopTime,             // Stream completion block / timestamp\n    int totalStreamAmount     // Total satoshis / fungible tokens scheduled\n) {\n    // 1. Recipient claims vested funds up to current claimTime verified by tx.time\n    function claim(sig recipientSig, int claimTime, int claimAmount) {\n        // Recipient authorization\n        require(checkSig(recipientSig, recipientPk));\n\n        // Timelock verification: tx.time enforces that blockchain time has reached claimTime\n        require(tx.time >= claimTime);\n        require(claimTime >= startTime);\n\n        // Introspection: enforce input covenant identity and NFT category match\n        require(tx.inputs[this.activeInputIndex].tokenCategory == streamCategoryId);\n\n        // Total stream duration\n        int duration = stopTime - startTime;\n        require(duration > 0);\n\n        // Calculate max claimable at claimTime\n        int effectiveTime = claimTime;\n        if (effectiveTime > stopTime) {\n            effectiveTime = stopTime;\n        }\n        int maxVested = (totalStreamAmount * (effectiveTime - startTime)) / duration;\n\n        // Current contract funds\n        int currentBalance = tx.inputs[this.activeInputIndex].value;\n        int previouslyClaimed = totalStreamAmount - currentBalance;\n\n        // Enforce that total claimed including this tx does not exceed maxVested\n        require(previouslyClaimed + claimAmount <= maxVested);\n        require(claimAmount > 0);\n\n        // Check remaining balance\n        int remainingBalance = currentBalance - claimAmount;\n\n        if (remainingBalance > 1000) {\n            // Self-reproducing covenant output: preserving state, lockingBytecode, and mutable NFT\n            require(tx.outputs[0].lockingBytecode == tx.inputs[this.activeInputIndex].lockingBytecode);\n            require(tx.outputs[0].tokenCategory == streamCategoryId);\n            require(tx.outputs[0].value >= remainingBalance);\n\n            // Output 1 delivers the claimed funds to recipient\n            bytes recipientLockingBytecode = new LockingBytecodeP2PKH(hash160(recipientPk));\n            require(tx.outputs[1].lockingBytecode == recipientLockingBytecode);\n            require(tx.outputs[1].value >= claimAmount);\n        } else {\n            // Final settlement: all remaining funds flow to recipient\n            bytes recipientLockingBytecode = new LockingBytecodeP2PKH(hash160(recipientPk));\n            require(tx.outputs[0].lockingBytecode == recipientLockingBytecode);\n            require(tx.outputs[0].value >= claimAmount);\n        }\n    }\n\n    // 2. Sender clawback: sender can cancel/clawback unvested funds\n    function clawback(sig senderSig, int cancelTime) {\n        // Enforce sender signature\n        require(checkSig(senderSig, senderPk));\n        require(tx.time >= cancelTime);\n\n        // Introspection check\n        require(tx.inputs[this.activeInputIndex].tokenCategory == streamCategoryId);\n\n        int currentBalance = tx.inputs[this.activeInputIndex].value;\n\n        if (cancelTime < stopTime) {\n            int duration = stopTime - startTime;\n            int effectiveTime = cancelTime;\n            if (effectiveTime < startTime) {\n                effectiveTime = startTime;\n            }\n            int vestedAmount = (totalStreamAmount * (effectiveTime - startTime)) / duration;\n            int unvestedRemaining = totalStreamAmount - vestedAmount;\n\n            if (unvestedRemaining > 0 && currentBalance > unvestedRemaining) {\n                bytes senderLockingBytecode = new LockingBytecodeP2PKH(hash160(senderPk));\n                require(tx.outputs[0].lockingBytecode == senderLockingBytecode);\n                require(tx.outputs[0].value >= unvestedRemaining);\n\n                int recipientRemaining = currentBalance - unvestedRemaining;\n                if (recipientRemaining > 1000) {\n                    bytes recipientLockingBytecode = new LockingBytecodeP2PKH(hash160(recipientPk));\n                    require(tx.outputs[1].lockingBytecode == recipientLockingBytecode);\n                    require(tx.outputs[1].value >= recipientRemaining);\n                }\n            } else {\n                bytes senderLockingBytecode = new LockingBytecodeP2PKH(hash160(senderPk));\n                require(tx.outputs[0].lockingBytecode == senderLockingBytecode);\n                require(tx.outputs[0].value >= currentBalance - 1000);\n            }\n        } else {\n            bytes senderLockingBytecode = new LockingBytecodeP2PKH(hash160(senderPk));\n            require(tx.outputs[0].lockingBytecode == senderLockingBytecode);\n            require(tx.outputs[0].value >= currentBalance - 1000);\n        }\n    }\n}\n",
+  "fingerprint": "55e07f608cfdd98f724eecccb52aaed1996cbb70fb6bf072ab562b9485a7750b",
+  "debug": {
+    "bytecode": "5679009c63577a5279ad5779b17557795479a269c0ce53798854795479947600a069587a765779a0635679776857797c567a94957c96c0c6567a78945879937ba169567900a0695679947602e803a06300cdc0c78800d154798800cc78a2690376a9145379a97e0288ac7e51cd788851cc5879a26975670376a9145379a97e0288ac7e00cd788800cc5879a26975686d6d6d755167567a519d567a78ad5679b175c0ce537a88c0c6567955799f63547954799457797656799f635579776857797857799495527996587978947600a055795279a09a630376a9145679a97e0288ac7e00cd788800cc5279a26955795279947602e803a0630376a9145979a97e0288ac7e51cd788851cc5279a26975686d670376a9145679a97e0288ac7e00cd788800cc567902e80394a26975686d6d670376a9145279a97e0288ac7e00cd788800cc527902e80394a26975686d6d6d755168",
+    "sourceMap": "14:4:63:5;;;;;16:25:16:37;;:39::50;;:8::53:1;19:27:19:36:0;;:8::38:1;;20:16:20:25:0;;:29::38;;:16:::1;:8::40;23:26:23:47:0;:16::62:1;:66::82:0;;:8::84:1;26:23:26:31:0;;:34::43;;:23:::1;27:16:27:24:0;:27::28;:16:::1;:8::30;30:28:30:37:0;;31:12:31:25;:28::36;;:12:::1;:38:33:9:0;32:28:32:36;;:12::37:1;31:38:33:9;34:25:34:42:0;;:46::59;:62::71;;:46:::1;:25::72;:76::84:0;:24:::1;37:39:37:60:0;:29::67:1;38:32:38:49:0;;:52::66;:32:::1;41:36:41:47:0;;:16:::1;:51::60:0;:16:::1;:8::62;42:16:42:27:0;;:30::31;:16:::1;:8::33;45:48:45:59:0;;:31:::1;47:12:47:28:0;:31::35;:12:::1;:37:57:9:0;49:31:49:32;:20::49:1;:63::84:0;:53::101:1;:12::103;50:31:50:32:0;:20::47:1;:51::67:0;;:12::69:1;51:31:51:32:0;:20::39:1;:43::59:0;:20:::1;:12::61;54:45:54:91:0;:78::89;;:70::90:1;:45::91;;;55:31:55:32:0;:20::49:1;:53::77:0;:12::79:1;56:31:56:32:0;:20::39:1;:43::54:0;;:20:::1;:12::56;47:37:57:9;57:15:62::0;59:45:59:91;:78::89;;:70::90:1;:45::91;;;60:31:60:32:0;:20::49:1;:53::77:0;:12::79:1;61:31:61:32:0;:20::39:1;:43::54:0;;:20:::1;:12::56;57:15:62:9;;14:69:63:5;;;;;:4;66::106::0;;;;68:25:68:34;;:36::44;:8::47:1;69:27:69:37:0;;:8::39:1;;72:26:72:47:0;:16::62:1;:66::82:0;;:8::84:1;74:39:74:60:0;:29::67:1;76:12:76:22:0;;:25::33;;:12:::1;:35:101:9:0;77:27:77:35;;:38::47;;:27:::1;78:32:78:42:0;;79:16:79:29;:32::41;;:16:::1;:43:81:13:0;80:32:80:41;;:16::42:1;79:43:81:13;82:32:82:49:0;;:53::66;:69::78;;:53:::1;:32::79;:83::91:0;;:31:::1;83:36:83:53:0;;:56::68;:36:::1;85:16:85:33:0;:36::37;:16:::1;:41::55:0;;:58::75;;:41:::1;:16;:77:96:13:0;86:46:86:89;:79::87;;:71::88:1;:46::89;;;87:35:87:36:0;:24::53:1;:57::78:0;:16::80:1;88:35:88:36:0;:24::43:1;:47::64:0;;:24:::1;:16::66;90:41:90:55:0;;:58::75;;:41:::1;91:20:91:38:0;:41::45;:20:::1;:47:95:17:0;92:53:92:99;:86::97;;:78::98:1;:53::99;;;93:39:93:40:0;:28::57:1;:61::85:0;:20::87:1;94:39:94:40:0;:28::47:1;:51::69:0;;:28:::1;:20::71;91:47:95:17;;85:77:96:13;96:19:100::0;97:46:97:89;:79::87;;:71::88:1;:46::89;;;98:35:98:36:0;:24::53:1;:57::78:0;:16::80:1;99:35:99:36:0;:24::43:1;:47::61:0;;:64::68;:47:::1;:24;:16::70;96:19:100:13;;76:35:101:9;;101:15:105::0;102:42:102:85;:75::83;;:67::84:1;:42::85;;;103:31:103:32:0;:20::49:1;:53::74:0;:12::76:1;104:31:104:32:0;:20::39:1;:43::57:0;;:60::64;:43:::1;:20;:12::66;101:15:105:9;;66:53:106:5;;;;;5:0:107:1",
+    "logs": [],
+    "requires": [
+      { "ip": 15, "line": 16 },
+      { "ip": 18, "line": 19 },
+      { "ip": 25, "line": 20 },
+      { "ip": 30, "line": 23 },
+      { "ip": 39, "line": 27 },
+      { "ip": 71, "line": 41 },
+      { "ip": 76, "line": 42 },
+      { "ip": 88, "line": 49 },
+      { "ip": 93, "line": 50 },
+      { "ip": 98, "line": 51 },
+      { "ip": 109, "line": 55 },
+      { "ip": 115, "line": 56 },
+      { "ip": 128, "line": 60 },
+      { "ip": 134, "line": 61 },
+      { "ip": 150, "line": 68 },
+      { "ip": 153, "line": 69 },
+      { "ip": 159, "line": 72 },
+      { "ip": 218, "line": 87 },
+      { "ip": 224, "line": 88 },
+      { "ip": 244, "line": 93 },
+      { "ip": 250, "line": 94 },
+      { "ip": 265, "line": 98 },
+      { "ip": 273, "line": 99 },
+      { "ip": 289, "line": 103 },
+      { "ip": 297, "line": 104 }
+    ],
+    "sourceTags": "110:110:sc;129:129:sc;245:245:sc;247:247:sc;268:268:sc;270:271:sc;292:292:sc"
+  },
+  "compiler": {
+    "name": "cashc",
+    "version": "0.14.0",
+    "options": {
+      "enforceFunctionParameterTypes": true,
+      "enforceLocktimeGuard": true
+    }
+  },
+  "updatedAt": "2026-11-14T01:57:38.304Z"
+}

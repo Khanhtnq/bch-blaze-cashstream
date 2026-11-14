@@ -1,0 +1,72 @@
+pragma cashscript ^0.14.0;
+
+// MilestoneEscrow: Multi-stage grant & bounty milestone release covenant
+// Supports client approval, arbiter dispute resolution, and timeout refund.
+contract MilestoneEscrow(
+    pubkey clientPk,
+    pubkey contributorPk,
+    pubkey arbiterPk,
+    bytes32 escrowCategoryId,
+    int deadline,
+    int milestoneSatoshis
+) {
+    // 1. Client approves milestone completion, releasing sats to contributor
+    function releaseMilestone(sig clientSig, int releaseAmount) {
+        require(checkSig(clientSig, clientPk));
+        require(tx.inputs[this.activeInputIndex].tokenCategory == escrowCategoryId);
+        require(releaseAmount <= milestoneSatoshis);
+        require(releaseAmount > 0);
+
+        int currentBalance = tx.inputs[this.activeInputIndex].value;
+        int remaining = currentBalance - releaseAmount;
+
+        if (remaining > 1000) {
+            // Keep covenant alive for subsequent milestones
+            require(tx.outputs[0].lockingBytecode == tx.inputs[this.activeInputIndex].lockingBytecode);
+            require(tx.outputs[0].tokenCategory == escrowCategoryId);
+            require(tx.outputs[0].value >= remaining);
+
+            bytes contributorLockingBytecode = new LockingBytecodeP2PKH(hash160(contributorPk));
+            require(tx.outputs[1].lockingBytecode == contributorLockingBytecode);
+            require(tx.outputs[1].value >= releaseAmount);
+        } else {
+            // Final milestone payout
+            bytes contributorLockingBytecode = new LockingBytecodeP2PKH(hash160(contributorPk));
+            require(tx.outputs[0].lockingBytecode == contributorLockingBytecode);
+            require(tx.outputs[0].value >= releaseAmount);
+        }
+    }
+
+    // 2. Arbiter resolves dispute between client and contributor
+    function resolveDispute(sig arbiterSig, int contributorShare, int clientRefund) {
+        require(checkSig(arbiterSig, arbiterPk));
+        require(tx.inputs[this.activeInputIndex].tokenCategory == escrowCategoryId);
+
+        int currentBalance = tx.inputs[this.activeInputIndex].value;
+        require(contributorShare + clientRefund <= currentBalance);
+        require(contributorShare >= 0);
+        require(clientRefund >= 0);
+
+        bytes contributorLockingBytecode = new LockingBytecodeP2PKH(hash160(contributorPk));
+        require(tx.outputs[0].lockingBytecode == contributorLockingBytecode);
+        require(tx.outputs[0].value >= contributorShare);
+
+        if (clientRefund > 1000) {
+            bytes clientLockingBytecode = new LockingBytecodeP2PKH(hash160(clientPk));
+            require(tx.outputs[1].lockingBytecode == clientLockingBytecode);
+            require(tx.outputs[1].value >= clientRefund);
+        }
+    }
+
+    // 3. Client refunds after deadline if no milestone reached
+    function refundTimeout(sig clientSig) {
+        require(checkSig(clientSig, clientPk));
+        require(tx.time >= deadline);
+        require(tx.inputs[this.activeInputIndex].tokenCategory == escrowCategoryId);
+
+        int currentBalance = tx.inputs[this.activeInputIndex].value;
+        bytes clientLockingBytecode = new LockingBytecodeP2PKH(hash160(clientPk));
+        require(tx.outputs[0].lockingBytecode == clientLockingBytecode);
+        require(tx.outputs[0].value >= currentBalance - 1000);
+    }
+}

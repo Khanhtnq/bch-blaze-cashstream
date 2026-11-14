@@ -1,0 +1,29 @@
+{
+  "name": "bch_blaze_cashstream",
+  "version": "1.0.0",
+  "description": "Bitcoin Cash CashTokens Linear Streaming Covenant & Milestone Escrow Protocol",
+  "type": "module",
+  "scripts": {
+    "compile": "npx cashc contracts/CashStreamVault.cash --output contracts/CashStreamVault.json && npx cashc contracts/MilestoneEscrow.cash --output contracts/MilestoneEscrow.json",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "bitcoincash",
+    "cashtokens",
+    "covenants",
+    "cashscript",
+    "streaming-money",
+    "escrow"
+  ],
+  "author": "Khanhtnq",
+  "license": "MIT",
+  "devDependencies": {
+    "@noble/curves": "^2.4.0",
+    "@noble/hashes": "^2.4.0",
+    "@types/node": "^22.13.1",
+    "cashc": "^0.14.0",
+    "cashscript": "^0.14.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}

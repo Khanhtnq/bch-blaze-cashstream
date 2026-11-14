@@ -1,0 +1,107 @@
+pragma cashscript ^0.14.0;
+
+// CashStreamVault: Linear per-block token/BCH streaming covenant with mutable state NFT
+// Enforces continuous vesting, recipient claims, self-reproducing covenant output, and sender clawback guard.
+contract CashStreamVault(
+    pubkey senderPk,
+    pubkey recipientPk,
+    bytes32 streamCategoryId,  // NFT category locking this stream session
+    int startTime,            // Stream start block / timestamp
+    int stopTime,             // Stream completion block / timestamp
+    int totalStreamAmount     // Total satoshis / fungible tokens scheduled
+) {
+    // 1. Recipient claims vested funds up to current claimTime verified by tx.time
+    function claim(sig recipientSig, int claimTime, int claimAmount) {
+        // Recipient authorization
+        require(checkSig(recipientSig, recipientPk));
+
+        // Timelock verification: tx.time enforces that blockchain time has reached claimTime
+        require(tx.time >= claimTime);
+        require(claimTime >= startTime);
+
+        // Introspection: enforce input covenant identity and NFT category match
+        require(tx.inputs[this.activeInputIndex].tokenCategory == streamCategoryId);
+
+        // Total stream duration
+        int duration = stopTime - startTime;
+        require(duration > 0);
+
+        // Calculate max claimable at claimTime
+        int effectiveTime = claimTime;
+        if (effectiveTime > stopTime) {
+            effectiveTime = stopTime;
+        }
+        int maxVested = (totalStreamAmount * (effectiveTime - startTime)) / duration;
+
+        // Current contract funds
+        int currentBalance = tx.inputs[this.activeInputIndex].value;
+        int previouslyClaimed = totalStreamAmount - currentBalance;
+
+        // Enforce that total claimed including this tx does not exceed maxVested
+        require(previouslyClaimed + claimAmount <= maxVested);
+        require(claimAmount > 0);
+
+        // Check remaining balance
+        int remainingBalance = currentBalance - claimAmount;
+
+        if (remainingBalance > 1000) {
+            // Self-reproducing covenant output: preserving state, lockingBytecode, and mutable NFT
+            require(tx.outputs[0].lockingBytecode == tx.inputs[this.activeInputIndex].lockingBytecode);
+            require(tx.outputs[0].tokenCategory == streamCategoryId);
+            require(tx.outputs[0].value >= remainingBalance);
+
+            // Output 1 delivers the claimed funds to recipient
+            bytes recipientLockingBytecode = new LockingBytecodeP2PKH(hash160(recipientPk));
+            require(tx.outputs[1].lockingBytecode == recipientLockingBytecode);
+            require(tx.outputs[1].value >= claimAmount);
+        } else {
+            // Final settlement: all remaining funds flow to recipient
+            bytes recipientLockingBytecode = new LockingBytecodeP2PKH(hash160(recipientPk));
+            require(tx.outputs[0].lockingBytecode == recipientLockingBytecode);
+            require(tx.outputs[0].value >= claimAmount);
+        }
+    }
+
+    // 2. Sender clawback: sender can cancel/clawback unvested funds
+    function clawback(sig senderSig, int cancelTime) {
+        // Enforce sender signature
+        require(checkSig(senderSig, senderPk));
+        require(tx.time >= cancelTime);
+
+        // Introspection check
+        require(tx.inputs[this.activeInputIndex].tokenCategory == streamCategoryId);
+
+        int currentBalance = tx.inputs[this.activeInputIndex].value;
+
+        if (cancelTime < stopTime) {
+            int duration = stopTime - startTime;
+            int effectiveTime = cancelTime;
+            if (effectiveTime < startTime) {
+                effectiveTime = startTime;
+            }
+            int vestedAmount = (totalStreamAmount * (effectiveTime - startTime)) / duration;
+            int unvestedRemaining = totalStreamAmount - vestedAmount;
+
+            if (unvestedRemaining > 0 && currentBalance > unvestedRemaining) {
+                bytes senderLockingBytecode = new LockingBytecodeP2PKH(hash160(senderPk));
+                require(tx.outputs[0].lockingBytecode == senderLockingBytecode);
+                require(tx.outputs[0].value >= unvestedRemaining);
+
+                int recipientRemaining = currentBalance - unvestedRemaining;
+                if (recipientRemaining > 1000) {
+                    bytes recipientLockingBytecode = new LockingBytecodeP2PKH(hash160(recipientPk));
+                    require(tx.outputs[1].lockingBytecode == recipientLockingBytecode);
+                    require(tx.outputs[1].value >= recipientRemaining);
+                }
+            } else {
+                bytes senderLockingBytecode = new LockingBytecodeP2PKH(hash160(senderPk));
+                require(tx.outputs[0].lockingBytecode == senderLockingBytecode);
+                require(tx.outputs[0].value >= currentBalance - 1000);
+            }
+        } else {
+            bytes senderLockingBytecode = new LockingBytecodeP2PKH(hash160(senderPk));
+            require(tx.outputs[0].lockingBytecode == senderLockingBytecode);
+            require(tx.outputs[0].value >= currentBalance - 1000);
+        }
+    }
+}
